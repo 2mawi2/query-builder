@@ -39,7 +39,7 @@ func TestQueryBuilder_Build_ShouldValidateTableName(t *testing.T) {
 func TestQueryBuilder_Build_ShouldBuildWhereStatement(t *testing.T) {
 	result, _ := NewQueryBuilder().Build(QueryOptions{
 		tableName: "table1",
-		wheres: []Where{
+		wheres: []WhereCondition{
 			{column: "column1", comparator: Equals, condition: 2},
 		},
 	})
@@ -52,7 +52,7 @@ func TestQueryBuilder_Build_ShouldBuildWhereStatement(t *testing.T) {
 func TestQueryBuilder_Build_ShouldBuildWhereStatement_Multiple(t *testing.T) {
 	result, _ := NewQueryBuilder().Build(QueryOptions{
 		tableName: "table1",
-		wheres: []Where{
+		wheres: []WhereCondition{
 			{column: "column1", comparator: Equals, condition: 2},
 			{column: "column2", comparator: Equals, condition: 1},
 		},
@@ -66,5 +66,16 @@ func TestQueryBuilder_Build_ShouldBuildWhereStatement_Multiple(t *testing.T) {
 }
 
 func TestQueryBuilder_Build_ShouldBuildWhereStatement_InComparator(t *testing.T) {
+	result, _ := NewQueryBuilder().Build(QueryOptions{
+		tableName: "table1",
+		wheres: []WhereCondition{
+			{column: "column1", comparator: In, condition: []int{0, 1}},
+		},
+	})
 
+	assert.Equal(t, "SELECT * FROM [table1] WHERE [table1].[column1] IN (@arg0, @arg1)", result.commandText)
+	assert.Equal(t, result.parameters[0].tag, "arg0")
+	assert.Equal(t, result.parameters[0].condition, 0)
+	assert.Equal(t, result.parameters[1].tag, "arg1")
+	assert.Equal(t, result.parameters[1].condition, 1)
 }

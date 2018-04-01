@@ -5,7 +5,7 @@ type QueryParameter struct {
 	condition interface{}
 }
 
-type Query struct {
+type RawQuery struct {
 	commandText string
 	parameters  []QueryParameter
 }
@@ -17,7 +17,7 @@ const (
 	In     WhereComparator = iota
 )
 
-type Where struct {
+type WhereCondition struct {
 	column     string
 	condition  interface{}
 	comparator WhereComparator
@@ -26,5 +26,5 @@ type Where struct {
 type QueryOptions struct {
 	tableName string
 	columns   []string
-	wheres    []Where
+	wheres    []WhereCondition
 }
