@@ -40,13 +40,6 @@ func (q QueryBuilder) Build(options QueryOptions) (RawQuery, error) {
 	}, nil
 }
 
-func validateOptions(options QueryOptions) error {
-	if options.tableName == " " || options.tableName == "" {
-		return &argError{errorMessage: "invalid table tag"}
-	}
-	return nil
-}
-
 func (q *QueryBuilder) addSelect() {
 	q.b.WriteString("SELECT ")
 	if len(q.options.columns) > 0 {
@@ -62,7 +55,7 @@ func (q *QueryBuilder) addSelect() {
 	q.b.WriteString(fmt.Sprintf(" FROM [%v]", q.options.tableName))
 }
 
-func castConditions(where WhereCondition) []interface{} {
+func castConditions(where Where) []interface{} {
 	if where.comparator == In {
 		return InterfaceSlice(where.condition)
 	} else {
@@ -81,12 +74,15 @@ func (q *QueryBuilder) addWheres() {
 	}
 }
 
-func (q *QueryBuilder) appendWhereCondition(where WhereCondition, i int) {
+func (q *QueryBuilder) appendWhereCondition(where Where, i int) {
 	q.b.WriteString(fmt.Sprintf("[%v].[%v] %v ", q.options.tableName, where.column, getComparator(where)))
+
 	conditions := castConditions(where)
 	params := q.getParams(conditions)
+
 	q.appendWhereConditions(params, where)
 	q.addParamsToQuery(conditions, params)
+
 	if i != len(q.options.wheres)-1 {
 		q.b.WriteString(" AND ")
 	}
@@ -101,27 +97,34 @@ func (q *QueryBuilder) addParamsToQuery(conditions []interface{}, params []strin
 
 func (q *QueryBuilder) getParams(conditions []interface{}) []string {
 	var params []string
+
 	for range conditions {
 		arg := "arg" + strconv.Itoa(q.tagCounter)
 		q.tagCounter++
 		params = append(params, arg)
 	}
+
 	return params
 }
 
-func (q *QueryBuilder) appendWhereConditions(params []string, where WhereCondition) {
+func (q *QueryBuilder) appendWhereConditions(params []string, where Where) {
 	var paramsWithAt []string
 	for i := range params {
 		paramsWithAt = append(paramsWithAt, "@"+params[i])
 	}
-	whereConditions := strings.Join(paramsWithAt, ", ")
-	if where.comparator == In {
-		whereConditions = "(" + whereConditions + ")"
-	}
+	whereConditions := getWhereConditionString(paramsWithAt, where)
 	q.b.WriteString(whereConditions)
 }
 
-func getComparator(where WhereCondition) string {
+func getWhereConditionString(params []string, where Where) string {
+	whereConditions := strings.Join(params, ", ")
+	if where.comparator == In {
+		whereConditions = "(" + whereConditions + ")"
+	}
+	return whereConditions
+}
+
+func getComparator(where Where) string {
 	if where.comparator == In {
 		return "IN"
 	} else if where.comparator == Equals {

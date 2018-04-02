@@ -17,7 +17,7 @@ const (
 	In     WhereComparator = iota
 )
 
-type WhereCondition struct {
+type Where struct {
 	column     string
 	condition  interface{}
 	comparator WhereComparator
@@ -26,5 +26,5 @@ type WhereCondition struct {
 type QueryOptions struct {
 	tableName string
 	columns   []string
-	wheres    []WhereCondition
+	wheres    []Where
 }

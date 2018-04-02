@@ -4,8 +4,9 @@ import "reflect"
 
 func InterfaceSlice(slice interface{}) []interface{} {
 	s := reflect.ValueOf(slice)
+
 	if s.Kind() != reflect.Slice {
-		panic("InterfaceSlice() given a non-slice type")
+		panic("slice must be of type Slice")
 	}
 
 	ret := make([]interface{}, s.Len())
