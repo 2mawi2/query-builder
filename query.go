@@ -5,7 +5,7 @@ type QueryParameter struct {
 	condition interface{}
 }
 
-type RawQuery struct {
+type Query struct {
 	commandText string
 	parameters  []QueryParameter
 }

@@ -10,7 +10,7 @@ import (
 type QueryBuilder struct {
 	b          bytes.Buffer
 	options    QueryOptions
-	query      RawQuery
+	query      Query
 	tagCounter int
 }
 
@@ -22,10 +22,10 @@ func (e *argError) Error() string {
 	return e.errorMessage
 }
 
-func (q QueryBuilder) Build(options QueryOptions) (RawQuery, error) {
+func (q QueryBuilder) Build(options QueryOptions) (Query, error) {
 	e := validateOptions(options)
 	if e != nil {
-		return RawQuery{}, e
+		return Query{}, e
 	}
 
 	q.options = options
@@ -34,7 +34,7 @@ func (q QueryBuilder) Build(options QueryOptions) (RawQuery, error) {
 	q.addSelect()
 	q.addWheres()
 
-	return RawQuery{
+	return Query{
 		commandText: q.b.String(),
 		parameters:  q.query.parameters,
 	}, nil
@@ -42,17 +42,23 @@ func (q QueryBuilder) Build(options QueryOptions) (RawQuery, error) {
 
 func (q *QueryBuilder) addSelect() {
 	q.b.WriteString("SELECT ")
+
 	if len(q.options.columns) > 0 {
-		for i, column := range q.options.columns {
-			q.b.WriteString(fmt.Sprintf("[%v]", column))
-			if i != len(q.options.columns)-1 {
-				q.b.WriteString(", ")
-			}
-		}
+		q.appendColumns()
 	} else {
 		q.b.WriteString("*")
 	}
+
 	q.b.WriteString(fmt.Sprintf(" FROM [%v]", q.options.tableName))
+}
+
+func (q *QueryBuilder) appendColumns() {
+	for i, column := range q.options.columns {
+		q.b.WriteString(fmt.Sprintf("[%v]", column))
+		if i != len(q.options.columns)-1 {
+			q.b.WriteString(", ")
+		}
+	}
 }
 
 func castConditions(where Where) []interface{} {
